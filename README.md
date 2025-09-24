@@ -176,6 +176,17 @@ npm run dev
 
 ---
 
+## Deployed Application
+
+You can access the live version of the Container Trail Viewer here:
+
+[Container Trail Viewer - Live Demo](https://container-trail-viewer.vercel.app/)
+
+*Frontend hosted on Vercel*
+*Backend API hosted on Render*
+
+---
+
 ## Conclusion
 
 This project fulfills all requirements:
