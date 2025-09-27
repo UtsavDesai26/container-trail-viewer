@@ -35,27 +35,27 @@ function generateInterpolatedPoints(trackPoints = [], stepMinutes = 15, containe
       raw: cur
     });
 
-    if (next) {
-      const dt = next.timeInMs - cur.timeInMs;
-      if (dt <= 0) continue;
-      let t = cur.timeInMs + stepMs;
-      while (t < next.timeInMs) {
-        const fraction = (t - cur.timeInMs) / dt;
-        const lat = cur.latitude + fraction * (next.latitude - cur.latitude);
-        const lon = cur.longitude + fraction * (next.longitude - cur.longitude);
-        out.push({
-          containerNumber,
-          latitude: lat,
-          longitude: lon,
-          timeInMs: t,
-          timestamp: new Date(t),
-          eventName: null,
-          type: 'interpolated',
-          raw: { from: cur, to: next, fraction }
-        });
-        t += stepMs;
-      }
-    }
+    // if (next) {
+    //   const dt = next.timeInMs - cur.timeInMs;
+    //   if (dt <= 0) continue;
+    //   let t = cur.timeInMs + stepMs;
+    //   while (t < next.timeInMs) {
+    //     const fraction = (t - cur.timeInMs) / dt;
+    //     const lat = cur.latitude + fraction * (next.latitude - cur.latitude);
+    //     const lon = cur.longitude + fraction * (next.longitude - cur.longitude);
+    //     out.push({
+    //       containerNumber,
+    //       latitude: lat,
+    //       longitude: lon,
+    //       timeInMs: t,
+    //       timestamp: new Date(t),
+    //       eventName: null,
+    //       type: 'interpolated',
+    //       raw: { from: cur, to: next, fraction }
+    //     });
+    //     t += stepMs;
+    //   }
+    // }
   }
 
   // if last point not added (loop adds), ensure last is present (already added)

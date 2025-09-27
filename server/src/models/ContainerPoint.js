@@ -11,4 +11,7 @@ const ContainerPointSchema = new mongoose.Schema({
   raw: { type: mongoose.Schema.Types.Mixed },
 }, { timestamps: true });
 
+// unique index to help prevent duplicates (container + time)
+ContainerPointSchema.index({ containerNumber: 1, timeInMs: 1 }, { unique: true });
+
 module.exports = mongoose.model('ContainerPoint', ContainerPointSchema);

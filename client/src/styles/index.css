@@ -1,43 +1,48 @@
+/* Global resets */
 html, body, #root {
   height: 100%;
   margin: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f7fa;
+  color: #333;
 }
 
+/* Layout */
 .app {
   display: flex;
   height: 100vh;
-  background-color: #f5f6fa;
 }
 
+/* Sidebar */
 .left {
-  width: 36%;
+  width: 360px;
   min-width: 320px;
   max-width: 420px;
   padding: 20px;
   box-sizing: border-box;
-  border-right: 1px solid #e0e0e0;
-  overflow-y: auto;
-  background-color: #ffffff;
+  background-color: #fff;
+  border-right: 1px solid #eee;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+  overflow-y: auto;
 }
 
 .left h2 {
-  margin: 0 0 16px 0;
-  font-size: 22px;
-  color: #333;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
   text-align: center;
+  color: #222;
 }
 
-.input {
+/* Form input/button */
+.left form {
   display: flex;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 8px;
 }
 
-.input input[type="text"] {
+.left input[type="text"] {
   flex: 1;
   padding: 10px 12px;
   font-size: 14px;
@@ -46,13 +51,13 @@ html, body, #root {
   transition: 0.2s;
 }
 
-.input input[type="text"]:focus {
+.left input[type="text"]:focus {
   outline: none;
   border-color: #4a90e2;
-  box-shadow: 0 0 5px rgba(74, 144, 226, 0.4);
+  box-shadow: 0 0 5px rgba(74, 144, 226, 0.3);
 }
 
-.input button {
+.left button {
   padding: 10px 16px;
   font-weight: 500;
   border-radius: 6px;
@@ -60,51 +65,78 @@ html, body, #root {
   background-color: #4a90e2;
   color: #fff;
   cursor: pointer;
-  transition: 0.2s;
+  transition: background-color 0.2s, transform 0.1s;
 }
 
-.input button:hover:not(:disabled) {
+.left button:hover:not(:disabled) {
   background-color: #357abd;
+  transform: translateY(-1px);
 }
 
-.input button:disabled {
+.left button:disabled {
   background-color: #a0c4f1;
   cursor: not-allowed;
 }
 
-.left > div strong {
-  font-size: 15px;
-  color: #444;
-}
-
-.events-list {
-  margin-top: 8px;
+/* Containers list */
+.left .container-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+}
+
+.left .container-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.left .container-item strong {
+  font-size: 14px;
+}
+
+/* Events list */
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
 }
 
 .event {
   padding: 10px 12px;
-  border-radius: 6px;
-  background-color: #f0f4f8;
+  border-radius: 8px;
+  background-color: #f9fbfd;
   border-left: 4px solid #4a90e2;
   display: flex;
   flex-direction: column;
   gap: 4px;
   font-size: 13px;
-  color: #333;
-  transition: 0.2s;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
 }
 
 .event:hover {
-  background-color: #e6f0fb;
+  background-color: #eef5ff;
+  transform: translateY(-2px);
 }
 
+.event div:first-child {
+  font-weight: 600;
+  color: #222;
+}
+
+.event small {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Map area */
 .right {
   flex: 1;
   position: relative;
-  border-radius: 0 0 0 0;
   overflow: hidden;
 }
 
@@ -112,12 +144,15 @@ html, body, #root {
   width: 100%;
   height: 100%;
   min-height: 500px;
+  border-radius: 0;
 }
 
+/* Tips */
 .left small {
   display: block;
-  margin-top: 16px;
-  color: #888;
+  margin-top: 8px;
+  color: #777;
   font-size: 12px;
   text-align: center;
+  line-height: 1.4;
 }

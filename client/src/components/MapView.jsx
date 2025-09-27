@@ -1,47 +1,28 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const eventIconUrl = {
-  'ICD IN': 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
-  'ICD OUT': 'https://cdn-icons-png.flaticon.com/512/684/684911.png',
-  'PORT IN': 'https://cdn-icons-png.flaticon.com/512/684/684915.png',
-  'PORT OUT': 'https://cdn-icons-png.flaticon.com/512/684/684912.png',
-  'TERMINAL OUT': 'https://cdn-icons-png.flaticon.com/512/684/684914.png',
-  'VESSEL ARRIVED': 'https://cdn-icons-png.flaticon.com/512/684/684913.png',
-  'DPD': 'https://cdn-icons-png.flaticon.com/512/684/684910.png'
-};
-
-// Normalize event name to match icon keys
-const getEventIcon = (eventName) => {
-  if (!eventName) return eventIconUrl['DPD'];
-  const normalized = eventName.replace(/ - [IVX]+$/i, '').trim().toUpperCase();
-  return eventIconUrl[normalized] || eventIconUrl['DPD'];
-};
-
-// Using forwardRef to expose functions to parent
 const MapView = forwardRef(({ geojson }, ref) => {
   const mapRef = useRef(null);
-  const markersRef = useRef({}); // store marker references
+  const markersRef = useRef({});
+  const layerGroupRef = useRef(null); // dedicated layer group
 
   useImperativeHandle(ref, () => ({
-    zoomToEvent: (coords) => {
-      const key = `${coords[0]}-${coords[1]}`;
-      const marker = markersRef.current[key];
-      if (marker) {
+    zoomToEvent: (coords, container) => {
+      const lng = coords[0], lat = coords[1];
+      const keySpecific = container ? `${container}-${lng}-${lat}` : null;
+      const keyGeneric = `${lng}-${lat}`;
+      const marker = (keySpecific && markersRef.current[keySpecific]) || markersRef.current[keyGeneric];
+      if (marker && mapRef.current) {
         marker.openPopup();
-        mapRef.current.flyTo([coords[1], coords[0]], 12, { duration: 1.5 });
+        mapRef.current.flyTo([lat, lng], 12, { duration: 1.2 });
       }
     }
   }));
 
   useEffect(() => {
     if (!mapRef.current) {
-      mapRef.current = L.map('map', {
-        center: [28.7041, 77.1025],
-        zoom: 5
-      });
-
+      mapRef.current = L.map('map', { center: [20.5937, 78.9629], zoom: 5 });
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors',
       }).addTo(mapRef.current);
@@ -49,63 +30,77 @@ const MapView = forwardRef(({ geojson }, ref) => {
 
     const map = mapRef.current;
 
+    // Clear previous layer group or create if not exists
+    if (layerGroupRef.current) {
+      layerGroupRef.current.clearLayers();
+    } else {
+      layerGroupRef.current = L.layerGroup().addTo(map);
+    }
+
     if (!geojson) return;
 
-    // Remove existing overlay layers
-    map.eachLayer(layer => {
-      if (layer.options && layer.options.pane === 'overlayPane') {
-        map.removeLayer(layer);
+    const features = Array.isArray(geojson.features) ? geojson.features : [];
+    markersRef.current = {};
+    const allPointsForFit = [];
+
+    // Draw lines first
+    features.forEach(f => {
+      if (f.geometry?.type === 'LineString' && f.properties?.type === 'line') {
+        const coords = f.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+        const color = f.properties?.color || 'red';
+        const polyline = L.polyline(coords, { color, weight: 3, opacity: 0.9 });
+        polyline.addTo(layerGroupRef.current);
+        coords.forEach(c => allPointsForFit.push(c));
       }
     });
 
-    const points = [];
-    markersRef.current = {}; // reset
-
-    geojson.features.forEach(f => {
+    // Draw points
+    features.forEach(f => {
+      if (f.geometry?.type !== 'Point') return;
       const [lng, lat] = f.geometry.coordinates;
+      allPointsForFit.push([lat, lng]);
 
-      if (f.geometry.type === 'Point') {
-        points.push([lat, lng]);
+      const container = f.properties?.containerNumber;
+      const key = `${container ? container + '-' : ''}${lng}-${lat}`;
 
-        if (f.properties.eventName) {
-          const icon = L.icon({
-            iconUrl: getEventIcon(f.properties.eventName),
-            iconSize: [32, 32],
-            iconAnchor: [16, 32],
-            popupAnchor: [0, -32],
-          });
-
-          const marker = L.marker([lat, lng], { icon }).addTo(map).bindPopup(`
-            <div>
-              <strong>Event:</strong> ${f.properties.eventName}<br/>
-              <strong>Container:</strong> ${f.properties.containerNumber || 'N/A'}<br/>
-              <strong>Transport Mode:</strong> ${f.properties.transportmode || 'N/A'}<br/>
-              <strong>Location:</strong> ${f.properties.currentLocation || 'N/A'}<br/>
-              <strong>Time:</strong> ${f.properties.timeInMs ? new Date(Number(f.properties.timeInMs)).toLocaleString() : 'N/A'}
-            </div>
-          `);
-
-          // Save marker for zooming
-          markersRef.current[`${lng}-${lat}`] = marker;
-        } else {
-          L.circleMarker([lat, lng], {
-            radius: 4,
-            color: 'gray',
-            fillColor: 'gray',
-            fillOpacity: 0.5
-          }).addTo(map);
-        }
+      if (f.properties?.eventName) {
+        const icon = L.icon({
+          iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+          iconSize: [32, 32],
+          iconAnchor: [16, 32],
+          popupAnchor: [0, -32]
+        });
+        const popupHtml = `
+          <div>
+            <strong>Event:</strong> ${f.properties.eventName}<br/>
+            <strong>Container:</strong> ${container || 'N/A'}<br/>
+            <strong>Time:</strong> ${f.properties.timeInMs ? new Date(Number(f.properties.timeInMs)).toLocaleString() : 'N/A'}
+          </div>
+        `;
+        const marker = L.marker([lat, lng], { icon }).bindPopup(popupHtml);
+        marker.addTo(layerGroupRef.current);
+        markersRef.current[key] = marker;
+      } else {
+        const circle = L.circleMarker([lat, lng], {
+          radius: 4,
+          color: f.properties?.color || 'gray',
+          fillColor: f.properties?.color || 'gray',
+          fillOpacity: 0.6
+        });
+        circle.addTo(layerGroupRef.current);
+        markersRef.current[key] = circle;
       }
     });
 
-    if (points.length > 1) {
-      L.polyline(points, { color: 'red', weight: 2 }).addTo(map);
-      map.fitBounds(points, { padding: [50, 50] });
+    if (allPointsForFit.length > 0) {
+      try {
+        map.fitBounds(allPointsForFit, { padding: [50, 50] });
+      } catch (err) {}
     }
 
   }, [geojson]);
 
-  return <div id="map" style={{ width: '100%', height: '100%', minHeight: '500px', borderRadius: '10px' }} />;
+  return <div id="map" style={{ width: '100%', height: '100vh', minHeight: '600px', borderRadius: 8 }} />;
 });
 
 export default MapView;
